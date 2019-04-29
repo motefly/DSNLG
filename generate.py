@@ -1,4 +1,4 @@
-from nalgene.parse import *
+from parse import *
 import os
 import json
 
@@ -128,8 +128,8 @@ if __name__ == "__main__":
     base_dir = os.path.dirname(filename)
     filename = os.path.basename(filename)
 
-    test_json = json.load(open('test2.json'))
-    root_context = Node('%').add(parse_dict(test_json))
+#    test_json = json.load(open('test2.json'))
+#    root_context = Node('%').add(parse_dict(test_json))
 
     generate_from_file(base_dir, filename)#, root_context)
 

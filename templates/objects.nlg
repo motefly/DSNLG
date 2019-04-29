@@ -1,0 +1,24 @@
+~cube
+     shape
+     die
+     hexahedron
+
+~color
+    blue
+    yellow
+    green
+ 
+
+%object
+    the ~cube ~color
+
+$object1
+    %object
+
+$object2
+    %object
+    
+$size
+  big
+  small
+
