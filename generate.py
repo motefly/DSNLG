@@ -5,14 +5,15 @@ import json
 from argparse import ArgumentParser
 import logging
 
-all_punctuation = ',.!?'
+all_punctuation = ';:,.!?'
 end_punctuation = '.!?'
 
 
 def walk_tree(root, current, context, start_w=0):
     """ Generate tokens up to $value level """
 
-    logging.debug('\n[%d walk_tree]' % start_w, '"' + current.key + '"', 'context', context)
+    logging.debug('[%d walk_tree] current %s context %s '
+            % (start_w, str(current.key), str(context)))
 
     try:
         seq = random.choice(current)
@@ -32,7 +33,7 @@ def walk_tree(root, current, context, start_w=0):
         return flat, tree
 
     for child in seq:
-        logging.debug('[%d walk_tree child]' % start_w, child)
+        logging.debug('[%d walk_tree child] %s' % (start_w, child))
         child_key = child.key
 
         # Optionally skip optional tokens
@@ -43,21 +44,15 @@ def walk_tree(root, current, context, start_w=0):
 
         # Expandable word, e.g. %phrase or ~synonym
         if child_key.startswith(('%', '~', '$', '@')):
-
-            # Existing value, pass in context
-            try:
-                sub_context = context[child_key]
-                if sub_context is not None: print('sub context', sub_context)
-
-            except Exception:
-                logging.error('[ERROR] Key', child_key, 'not in', context)
-                sub_context = None
+            sub_context = context[child_key]  \
+                if context is not None and child_key in context \
+                else None
 
             try:
                 sub_flat, sub_tree = walk_tree(root, sub_context or root[child_key], context, start_w)
             except Exception as e:
-                logging.error('[ERROR] Key', child_key, 'not in', context)
-                logging.error('Exception walking from current', current, child_key, context)
+                logging.error('Exception walking from current %s %s %s'
+                        % (current, child_key, str(context)))
                 raise e
 
             # Add words to flat tree
@@ -111,8 +106,11 @@ def fix_newlines(sentence):
 def fix_spacing(sentence):
     return re.sub(r'\s+', ' ', sentence)
 
-def generate_from_file(base_dir, filename, root_context=Node('%')):
-    parsed = parse_file(base_dir, filename)
+def generate_from_file(filename, root_context=Node('%')):
+    if not os.path.isfile(filename):
+        raise ValueError("The specified file does not exist")
+ 
+    parsed = parse_file(filename)
     parsed.map_leaves(tokenizeLeaf)
     walked_flat, walked_tree = walk_tree(parsed, parsed['%'], root_context['%'])
     # print(walked_flat)
@@ -123,45 +121,39 @@ def generate_from_file(base_dir, filename, root_context=Node('%')):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("template", type=str, 
-            help="Template file containing grammar structure")
+    parser.add_argument("template", type=Path, default=Path(""), 
+            help="Template file's path containing grammar structure")
     parser.add_argument("--root", type=str, default="",
             help="Root command")
-    parser.add_argument("--json", type=Path, default="")
+    parser.add_argument("--json", type=Path, default=Path(""))
+    parser.add_argument("--log", type=str, default="INFO")
     known, unknown = parser.parse_known_args()
+    
+    numeric_level = getattr(logging, known.log.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError('Invalid log level: %s' % known.log)
+    logging.basicConfig(level=numeric_level)
+    
     logging.debug(known)
-    loggin.debug(unknown)
+    logging.debug(unknown)
  
     root_context = Node('%')
 
-    if known.json != "":
+    if known.root != "":
+        logging.debug("Node is %s" % known.root)
+        root_context = Node("%" + known.root)
+
+    if known.json != Path(""):
         if not os.path.isfile(known.json):
             logging.error("The specified json file does not exist")
             sys.exit()
         dict_json = json.load(open(known.json))
         root_context = root_context.add(parse_dict(dict_json))
 
-    if known.root != "":
-        root_context = Node(
+    if not os.path.isfile(known.template):
+            logging.error("The specified template file does not exist")
+            sys.exit()
+ 
+    filename = os.path.realpath(known.template)
+    generate_from_file(filename, root_context)
 
-
-   sys.exit()
-
-    if len(sys.argv) < 2:
-        print("Usage: python generate.py [grammar].nlg")
-        sys.exit()
-
-    filename = os.path.realpath(sys.argv[1])
-    base_dir = os.path.dirname(filename)
-    filename = os.path.basename(filename)
-
-    generate_from_file(base_dir, filename)#, root_context)
-
-# else:
-#     filename = sys.argv[1]
-#     base_dir = os.path.dirname(os.path.realpath(__file__))
-#     combined = os.path.join(base_dir, filename)
-#     base_dir = os.path.dirname(combined)
-#     filename = os.path.basename(combined)
-
-#     def generate(): return generate_from_file(base_dir, filename, Node('%'))

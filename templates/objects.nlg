@@ -1,6 +1,6 @@
 %cube
      shape
-     die
+     cube
      hexahedron
 
 $color
@@ -10,7 +10,7 @@ $color
  
 
 %object
-    the %cube $color
+    the $color %cube
 
 $object1
     %object

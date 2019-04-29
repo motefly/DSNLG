@@ -1,4 +1,5 @@
 import re
+import os
 import math
 import random
 import json
@@ -13,7 +14,7 @@ def count_indent(s):
     indent = len(re.match(start_space, s).group(0))
     return math.floor(indent / SHIFT_WIDTH)
 
-def parse_string(base_dir, string):
+def parse_string(string, template_dir=""):
     lines = string.split('\n')
     lines = [line for line in lines if not re.match(r'^\s*#', line)]
     parsed = Node('')
@@ -28,8 +29,8 @@ def parse_string(base_dir, string):
         if len(line) == 0: continue
 
         if level == 0 and line.startswith('@import'):
-            filename = line.split(' ')[1]
-            imported = parse_file(base_dir, filename)
+            filename = os.path.join(template_dir, line.split(' ')[1])
+            imported = parse_file(filename)
             for child in imported:
                 parsed.add(child)
                 indexes[level] += 1
@@ -58,8 +59,13 @@ def tokenizeLeaf(n):
         added = n.add(s)
     n.key = 'seq'
 
-def parse_file(base_dir, filename):
-    parsed = parse_string(base_dir, open(base_dir + '/' + filename).read())
+def parse_file(filename):
+    if not os.path.isfile(filename):
+        raise ValueError("The specified file %s does not exist" %
+                filename)
+    base_dir = os.path.dirname(filename)
+    rules = open(filename).read()
+    parsed = parse_string(rules, template_dir=base_dir)
     return parsed
 
 def parse_dict(obj, obj_key='%'):
@@ -68,6 +74,5 @@ def parse_dict(obj, obj_key='%'):
         for key in obj.keys():
             tree.add(parse_dict(obj[key], key))
         return tree
-    else:
-        tree.add(obj)
-        return tree
+    tree.add(obj)
+    return tree
