@@ -1,16 +1,16 @@
-~cube
+%cube
      shape
      die
      hexahedron
 
-~color
+$color
     blue
     yellow
     green
  
 
 %object
-    the ~cube ~color
+    the %cube $color
 
 $object1
     %object

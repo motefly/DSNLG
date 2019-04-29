@@ -1,16 +1,23 @@
+from pathlib import Path
 from parse import *
 import os
 import json
+from argparse import ArgumentParser
+import logging
 
-# Generate tokens up to $value level
+all_punctuation = ',.!?'
+end_punctuation = '.!?'
+
 
 def walk_tree(root, current, context, start_w=0):
-    # print('\n[%d walk_tree]' % start_w, '"' + current.key + '"', 'context', context)
+    """ Generate tokens up to $value level """
+
+    logging.debug('\n[%d walk_tree]' % start_w, '"' + current.key + '"', 'context', context)
 
     try:
         seq = random.choice(current)
     except Exception as e:
-        print('Exception walking from current', current, context)
+        logging.error('Exception walking from current', current, context)
         raise e
 
     flat = Node('>')
@@ -25,7 +32,7 @@ def walk_tree(root, current, context, start_w=0):
         return flat, tree
 
     for child in seq:
-        # print('[%d walk_tree child]' % start_w, child)
+        logging.debug('[%d walk_tree child]' % start_w, child)
         child_key = child.key
 
         # Optionally skip optional tokens
@@ -43,14 +50,14 @@ def walk_tree(root, current, context, start_w=0):
                 if sub_context is not None: print('sub context', sub_context)
 
             except Exception:
-                #print('[ERROR] Key', child_key, 'not in', context)
+                logging.error('[ERROR] Key', child_key, 'not in', context)
                 sub_context = None
 
             try:
                 sub_flat, sub_tree = walk_tree(root, sub_context or root[child_key], context, start_w)
             except Exception as e:
-                print('[ERROR] Key', child_key, 'not in', context)
-                print('Exception walking from current', current, child_key, context)
+                logging.error('[ERROR] Key', child_key, 'not in', context)
+                logging.error('Exception walking from current', current, child_key, context)
                 raise e
 
             # Add words to flat tree
@@ -89,9 +96,6 @@ def walk_tree(root, current, context, start_w=0):
 def fix_sentence(sentence):
     return fix_capitalization(fix_punctuation(fix_newlines(fix_spacing(sentence))))
 
-all_punctuation = ',.!?'
-end_punctuation = '.!?'
-
 def fix_capitalization(sentence):
     return ''.join(map(lambda s: s.capitalize(), re.split(r'([' + end_punctuation + ']\s*)', sentence)))
 
@@ -107,9 +111,7 @@ def fix_newlines(sentence):
 def fix_spacing(sentence):
     return re.sub(r'\s+', ' ', sentence)
 
-def generate_from_file(base_dir, filename, root_context=None):
-    if root_context is None:
-        root_context = Node('%')
+def generate_from_file(base_dir, filename, root_context=Node('%')):
     parsed = parse_file(base_dir, filename)
     parsed.map_leaves(tokenizeLeaf)
     walked_flat, walked_tree = walk_tree(parsed, parsed['%'], root_context['%'])
@@ -120,6 +122,31 @@ def generate_from_file(base_dir, filename, root_context=None):
     return parsed, walked_flat, walked_tree
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("template", type=str, 
+            help="Template file containing grammar structure")
+    parser.add_argument("--root", type=str, default="",
+            help="Root command")
+    parser.add_argument("--json", type=Path, default="")
+    known, unknown = parser.parse_known_args()
+    logging.debug(known)
+    loggin.debug(unknown)
+ 
+    root_context = Node('%')
+
+    if known.json != "":
+        if not os.path.isfile(known.json):
+            logging.error("The specified json file does not exist")
+            sys.exit()
+        dict_json = json.load(open(known.json))
+        root_context = root_context.add(parse_dict(dict_json))
+
+    if known.root != "":
+        root_context = Node(
+
+
+   sys.exit()
+
     if len(sys.argv) < 2:
         print("Usage: python generate.py [grammar].nlg")
         sys.exit()
@@ -127,9 +154,6 @@ if __name__ == "__main__":
     filename = os.path.realpath(sys.argv[1])
     base_dir = os.path.dirname(filename)
     filename = os.path.basename(filename)
-
-#    test_json = json.load(open('test2.json'))
-#    root_context = Node('%').add(parse_dict(test_json))
 
     generate_from_file(base_dir, filename)#, root_context)
 
