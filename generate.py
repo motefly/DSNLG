@@ -112,7 +112,8 @@ def generate_from_file(filename, root_context=Node('%')):
  
     parsed = parse_file(filename)
     parsed.map_leaves(tokenizeLeaf)
-    walked_flat, walked_tree = walk_tree(parsed, parsed['%'], root_context['%'])
+    key = root_context.key
+    walked_flat, walked_tree = walk_tree(parsed, parsed[key], root_context[key])
     # print(walked_flat)
     print('>', fix_sentence(walked_flat.raw_str))
     print(walked_tree)
