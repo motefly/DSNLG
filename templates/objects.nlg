@@ -20,23 +20,23 @@
     the %color %type
 
 %object1
-    the $object1_color $object1_type
+    the %color %object1_type
 
 %object2
-    the $object2_color $object2_type
+    the %object2_color %object2_type
     
-$size
+%size
     big
     small
 
-$object1_color
+%object1_color
     blue
 
-$object1_type
+%object1_type
     cube 
 
-$object2_color
+%object2_color
     blue
 
-$object2_type
+%object2_type
     cube 
