@@ -45,10 +45,11 @@ def walk_tree(root, current, context, start_w=0):
         # Expandable word, e.g. %phrase or ~synonym
         if child_key.startswith(('%', '~', '$', '@')):
             sub_context = context[child_key]  \
-                if context is not None and child_key in context \
+                if  context is not None and child_key in context \
                 else None
 
             try:
+                #import pudb; pudb.set_trace();
                 sub_flat, sub_tree = walk_tree(root, sub_context or root[child_key], context, start_w)
             except Exception as e:
                 logging.error('Exception walking from current %s %s %s'
@@ -200,7 +201,6 @@ if __name__ == "__main__":
  
     filename = os.path.realpath(known.template)
     parser = parser_from_file(filename)
-    import pudb; pudb.set_trace();
     flats, trees = generate_sentences(parser, root_context, known.n)
     write_results(flats, trees, known.output) 
 
