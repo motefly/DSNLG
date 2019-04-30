@@ -53,7 +53,7 @@ def parse_string(string, template_dir=""):
 
     return parsed
 
-def tokenizeLeaf(n):
+def tokenize_leaf(n):
     n.type = 'seq'
     for s in n.key.split(' '):
         added = n.add(s)

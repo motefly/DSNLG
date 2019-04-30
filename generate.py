@@ -106,19 +106,41 @@ def fix_newlines(sentence):
 def fix_spacing(sentence):
     return re.sub(r'\s+', ' ', sentence)
 
-def generate_from_file(filename, root_context=Node('%')):
+def parser_from_file(filename):
+    """ Load a parser from a .nlg file """
     if not os.path.isfile(filename):
         raise ValueError("The specified file does not exist")
- 
     parsed = parse_file(filename)
-    parsed.map_leaves(tokenizeLeaf)
-    key = root_context.key
-    walked_flat, walked_tree = walk_tree(parsed, parsed[key], root_context[key])
-    # print(walked_flat)
-    print('>', fix_sentence(walked_flat.raw_str))
-    print(walked_tree)
-    print('-' * 80)
-    return parsed, walked_flat, walked_tree
+    parsed.map_leaves(tokenize_leaf)
+    return parsed
+
+def generate_sentences(parsed, context=Node('%'), n=1):
+    """ Generate random sentences from a parser """ 
+    key = context.key
+    flats, trees = [], []
+
+    for i in range(n):
+        f, t = walk_tree(parsed, parsed[key], context[key])
+        flats.append(f)
+        trees.append(t)
+
+    return flats, trees
+
+def write_results(flats, trees, output=Path("")):
+    """ Write results on output. If output's path is empty, we just print the results"""
+
+    if output == Path(""):
+        for flat, tree in zip(flats, trees):
+            print('>', fix_sentence(flat.raw_str))
+            print(tree)
+            print('-' * 80)
+    else:
+        with open(output, "w+") as f:
+            for flat, tree in zip(flats, trees):
+                f.write('\n>%s' % fix_sentence(flat.raw_str))
+                f.write('\n%s' % tree)
+                f.write('\n' + '-' * 80)
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -128,6 +150,13 @@ if __name__ == "__main__":
             help="Root command")
     parser.add_argument("--json", type=Path, default=Path(""))
     parser.add_argument("--log", type=str, default="INFO")
+    parser.add_argument("-n", type=int, default=1, 
+            help="Number of sentences to produce")
+    parser.add_argument("--output", type=Path, default=Path(""),
+            help="Output file to save generated sentences")
+    parser.add_argument("--seed", type=int, default=None,
+            help="Seed for randomness")
+
     known, unknown = parser.parse_known_args()
     
     numeric_level = getattr(logging, known.log.upper(), None)
@@ -135,19 +164,26 @@ if __name__ == "__main__":
         raise ValueError('Invalid log level: %s' % known.log)
     logging.basicConfig(level=numeric_level)
     
-    logging.debug(known)
-    logging.debug(unknown)
+    logging.debug("Parameters:%s" % known)
+    logging.debug("Context:%s" % unknown)
  
+    random.seed(a=known.seed)
+
     root_context = Node('%')
 
     if known.root != "":
         logging.debug("Node is %s" % known.root)
         root_context = Node("%" + known.root)
 
+    if unknown != []:
+        logging.debug("Adding CLI context")
+        root_context = root_context.add(parse_dict(unknown))
+
     if known.json != Path(""):
         if not os.path.isfile(known.json):
             logging.error("The specified json file does not exist")
             sys.exit()
+        logging.debug("Adding JSON context")
         dict_json = json.load(open(known.json))
         root_context = root_context.add(parse_dict(dict_json))
 
@@ -156,5 +192,8 @@ if __name__ == "__main__":
             sys.exit()
  
     filename = os.path.realpath(known.template)
-    generate_from_file(filename, root_context)
+    parser = parser_from_file(filename)
+    flats, trees = generate_sentences(parser, root_context, known.n)
+    write_results(flats, trees, known.output) 
+
 
