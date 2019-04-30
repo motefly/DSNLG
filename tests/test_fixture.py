@@ -7,13 +7,16 @@ import os
 import sys
 sys.path.append("..")
 from generate import parser_from_file, generate_sentences, write_results
+from generate import add_json_context
 from node import Node
 import logging 
 
 ROOT_DIR = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 EXPECTED_DIR = ROOT_DIR / "tests" / "expected"
 
-random.seed(1)
+@pytest.fixture
+def setup():
+    random.seed(1)
 
 def compare_results(expected, results):
     if not os.path.isfile(expected):
@@ -40,23 +43,30 @@ def compare_results(expected, results):
             print("Please answer by yes or no.")
 
 
-def create_fixture_data():
-    """ This should be run carefully as it overwrites the expected results """
-    pass
 
-def test_example_iot_root():
+def test_example_iot_root(setup):
     parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
-    flats, trees = generate_sentences(parser, Node("%"), 1)
+    flats, trees = generate_sentences(parser, Node("%getWeather"), 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
     compare_results(EXPECTED_DIR / "iot_root.test", tmp.name)
 
-def test_example_iot_tokyo():
+def test_example_iot_tokyo(setup):
     parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
-    flats, trees = generate_sentences(parser, Node("%"), 1)
+    flats, trees = generate_sentences(parser, Node("%getWeather"), 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
     compare_results(EXPECTED_DIR / "iot_tokyo.test", tmp.name)
+
+def test_example_iot_device_light_off(setup):
+    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
+    context = add_json_context(ROOT_DIR / "tests" / "deviceTurnOff.json",
+            Node("%"))
+    flats, trees = generate_sentences(parser, context, 1)
+    tmp = NamedTemporaryFile(delete=False)
+    write_results(flats, trees, output=tmp.name)
+    compare_results(EXPECTED_DIR / "iot_device_light_off.test", tmp.name)
+
 
 
 if __name__ == "__main__":
@@ -64,5 +74,6 @@ if __name__ == "__main__":
     def istest(o):
         return isfunction(o[1]) and  o[0].startswith("test")
 
-    [o[1]() for o in getmembers(sys.modules[__name__]) \
+    [random.seed(1) and o[1](setup) for o in getmembers(sys.modules[__name__]) \
+
             if istest(o)]

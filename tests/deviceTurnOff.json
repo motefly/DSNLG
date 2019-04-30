@@ -1,0 +1,1 @@
+{"entry": "%setDeviceState", "values": {"$device.state": "off", "$device.name": "office light"}}

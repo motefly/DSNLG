@@ -141,6 +141,15 @@ def write_results(flats, trees, output=Path("")):
                 f.write('\n%s' % tree)
                 f.write('\n' + '-' * 80)
 
+def add_json_context(filename, context):
+    if not os.path.isfile(filename):
+        logging.error("The specified json file does not exist")
+        sys.exit()
+    logging.debug("Adding JSON context")
+    dict_json = json.loads(Path(filename).read_text())
+    return context.add(parse_dict(dict_json))
+
+
 
 if __name__ == "__main__":
     parser = ArgumentParser()
@@ -180,12 +189,8 @@ if __name__ == "__main__":
         root_context = root_context.add(parse_dict(unknown))
 
     if known.json != Path(""):
-        if not os.path.isfile(known.json):
-            logging.error("The specified json file does not exist")
-            sys.exit()
-        logging.debug("Adding JSON context")
-        dict_json = json.load(open(known.json))
-        root_context = root_context.add(parse_dict(dict_json))
+        root_context = add_json_context(known.json, 
+                context=root_context)
 
     if not os.path.isfile(known.template):
             logging.error("The specified template file does not exist")
