@@ -7,7 +7,7 @@
     %buildTower3
 
 %buildTower2
-    %put %object %location_top %object
+    %put %object1 %location_top %object2
 
 %buildTower3
     Hello world!

@@ -190,7 +190,9 @@ if __name__ == "__main__":
 
     if known.json != Path(""):
         root_context = add_json_context(known.json, 
-                context=root_context)
+                context=Node('%'))#root_context)
+    
+    logging.debug(str(root_context))
 
     if not os.path.isfile(known.template):
             logging.error("The specified template file does not exist")
@@ -198,6 +200,7 @@ if __name__ == "__main__":
  
     filename = os.path.realpath(known.template)
     parser = parser_from_file(filename)
+    import pudb; pudb.set_trace();
     flats, trees = generate_sentences(parser, root_context, known.n)
     write_results(flats, trees, known.output) 
 

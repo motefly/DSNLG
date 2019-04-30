@@ -75,5 +75,4 @@ if __name__ == "__main__":
         return isfunction(o[1]) and  o[0].startswith("test")
 
     [random.seed(1) and o[1](setup) for o in getmembers(sys.modules[__name__]) \
-
             if istest(o)]

@@ -3,19 +3,26 @@
      cube
      hexahedron
 
-$color
+%color
     blue
     yellow
     green
+
+%cup
+    mug
+    cup
  
+%type
+    %cube
+    %cup
 
 %object
-    the $color %cube
+    the %color %type
 
-$object1
+%object1
     %object
 
-$object2
+%object2
     %object
     
 $size
