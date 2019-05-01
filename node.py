@@ -43,18 +43,10 @@ class Node:
         if isinstance(key, list):
             return self.descend(key)
         elif isinstance(key, str):
-                #key = key.split('.')
-            #if len(key) == 1:
-                #key = key[0]
-                if key in self.children_by_key:
-                    return self.children_by_key[key]
-                else:
-                    return None
-            #else:
-            #    print('regular key', key)
-            #    logging.debug('Fuck i am here %s' % key)
-            #    return self.descend(key)
-            #    exit()
+            if key in self.children_by_key:
+                return self.children_by_key[key]
+            else:
+                return None
  
         else:
             return self.children[key]

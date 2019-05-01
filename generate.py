@@ -4,10 +4,29 @@ import os
 import json
 from argparse import ArgumentParser
 import logging
+#            import pudb; pudb.set_trace();
 
 all_punctuation = ';:,.!?'
 end_punctuation = '.!?'
 
+def find_next_node(child_key, current_key, root, context):
+    next_node = None
+    if  context is not None and child_key in context:
+        return context[child_key]
+    composed = f"{current_key}.{child_key}"
+    if context is not None and composed in context:
+        return context[composed]
+    
+    # there is no context so we are looking for a key in the tree
+    if child_key in root:
+        return root[child_key]
+    if child_key.rstrip('0123456789') in root:
+        next_node = root[child_key.rstrip('0123456789')]
+        next_node.key = child_key
+        return next_node
+    
+    logging.error(f"Can't find a definition for the word {child_key}")
+    exit() 
 
 def walk_tree(root, current, context, start_w=0):
     """ Generate tokens up to $value level """
@@ -24,12 +43,9 @@ def walk_tree(root, current, context, start_w=0):
     flat = Node('>')
     tree = Node(current.key)
 
-    # TODO: Remove?
     if seq.is_leaf:
-        print('flat seq', seq)
         flat.add(seq)
         tree.add(seq)
-        print('tree flat', tree)
         return flat, tree
 
     for child in seq:
@@ -43,17 +59,11 @@ def walk_tree(root, current, context, start_w=0):
                 continue
 
         # Expandable word, e.g. %phrase or ~synonym
-        if child_key.startswith(('%', '~', '$', '@')):
-            sub_context = None
-            composed = f"{current.key}.{child_key}"
-#            import pudb; pudb.set_trace();
-            if  context is not None and child_key in context:
-                sub_context = context[child_key]
-            elif context is not None and composed in context:
-                sub_context = context[composed]
+        if child_key.startswith(('%', '~')):
+            next_node = find_next_node(child_key, current.key, root, context)
 
             try:
-                sub_flat, sub_tree = walk_tree(root, sub_context or root[child_key], context, start_w)
+                sub_flat, sub_tree = walk_tree(root, next_node, context, start_w)
             except Exception as e:
                 logging.error('Exception walking from current %s %s %s'
                         % (current, child_key, str(context)))
@@ -69,7 +79,7 @@ def walk_tree(root, current, context, start_w=0):
 
             # Add to (or merge with) tree
             if not child_key.startswith('~'):
-                if root[child_key].passthrough:
+                if child_key in root and root[child_key].passthrough:
                     tree.merge(sub_tree)
                 else:
                     tree.add(sub_tree)

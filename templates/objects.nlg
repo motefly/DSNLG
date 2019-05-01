@@ -19,24 +19,8 @@
 %object
     the %color %type
 
-%object1
-    the %color %type
-
-%object2
-    the %color %type
     
 %size
     big
     small
 
-%object1_color
-    blue
-
-%object1_type
-    cube 
-
-%object2_color
-    blue
-
-%object2_type
-    cube 

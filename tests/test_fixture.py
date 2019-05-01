@@ -15,8 +15,13 @@ ROOT_DIR = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 EXPECTED_DIR = ROOT_DIR / "tests" / "expected"
 
 @pytest.fixture
-def setup():
+def parser():
+    return initialize_parser()
+
+def initialize_parser():
     random.seed(1)
+    parser = parser_from_file(ROOT_DIR / "templates" / "skills.nlg")
+    return parser
 
 def compare_results(expected, results):
     if not os.path.isfile(expected):
@@ -44,28 +49,19 @@ def compare_results(expected, results):
 
 
 
-def test_example_iot_root(setup):
-    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
-    flats, trees = generate_sentences(parser, Node("%getWeather"), 1)
+def test_example_build_tower2(parser):
+    flats, trees = generate_sentences(parser, Node("%buildTower2"), 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
-    compare_results(EXPECTED_DIR / "iot_root.test", tmp.name)
+    compare_results(EXPECTED_DIR / "basic_build_tower2.test", tmp.name)
 
-def test_example_iot_tokyo(setup):
-    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
-    flats, trees = generate_sentences(parser, Node("%getWeather"), 1)
-    tmp = NamedTemporaryFile(delete=False)
-    write_results(flats, trees, output=tmp.name)
-    compare_results(EXPECTED_DIR / "iot_tokyo.test", tmp.name)
-
-def test_example_iot_device_light_off(setup):
-    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
-    context = add_json_context(ROOT_DIR / "tests" / "deviceTurnOff.json",
+def test_example_json(parser):
+    context = add_json_context(ROOT_DIR / "tests" / "buildTower.json",
             Node("%"))
     flats, trees = generate_sentences(parser, context, 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
-    compare_results(EXPECTED_DIR / "iot_device_light_off.test", tmp.name)
+    compare_results(EXPECTED_DIR / "json.test", tmp.name)
 
 
 
@@ -74,5 +70,5 @@ if __name__ == "__main__":
     def istest(o):
         return isfunction(o[1]) and  o[0].startswith("test")
 
-    [random.seed(1) and o[1](setup) for o in getmembers(sys.modules[__name__]) \
+    [o[1](initialize_parser()) for o in getmembers(sys.modules[__name__]) \
             if istest(o)]
