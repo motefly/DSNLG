@@ -1,7 +1,7 @@
 # nalgenarg
 
 A natural language generation language, intended for creating training data using parametrized vectors.
-The parser was built in a very similar project [nalgene][https://github.com/spro/nalgene].
+The parser was built in a very similar project [nalgene](https://github.com/spro/nalgene).
 This project differentiates itself by using different structures in the grammar. 
 
 ## Overview
@@ -60,6 +60,7 @@ $ python generate.py templates/skills.nlg --root buildTower2
 
 Generated sentences can be saved inside a file whose path is given in `--output`.
 
+## Generated sentences from specific parameters 
 
 You can also supply values from a JSON file:
 
@@ -145,9 +146,18 @@ Here's how the generator arrived at this specific sentence and tree pair:
         * Now the output sentence is `"hey there and bye"`
 * No more tokens, so we're done
 
-## Unknown node
+## Homonyms
 
-If a node is unknown, it will be stripped from trailing digits when searching for its corresponding node.
+Sometimes, we want to specify several nodes having different properties. We can do it easily with trailing digits:
+
+```
+%object
+    the %color %type
+
+%buildTower
+    the %object1 goes on top of %object2
+```
+
 
 
 ## Optional tokens
