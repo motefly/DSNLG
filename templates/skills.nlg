@@ -1,6 +1,8 @@
 @import objects.nlg
 @import locations.nlg
 @import actions.nlg
+@import fillers.nlg
+
 
 % 
     %buildTower2
@@ -8,9 +10,10 @@
 
 %buildTower2
     %put %object1 %location_top %object2
+    %object1 goes %location_top %object2
 
 %buildTower3
-    Hello world!
+    %buildTower2 and? %after %put %object3 %location_top %object2 
 
 
 
