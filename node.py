@@ -43,17 +43,19 @@ class Node:
         if isinstance(key, list):
             return self.descend(key)
         elif isinstance(key, str):
-            # print('get this', key, 'from', self)
-            key = key.split('.')
-            if len(key) == 1:
-                key = key[0]
-                # print('regular key', key)
+                #key = key.split('.')
+            #if len(key) == 1:
+                #key = key[0]
                 if key in self.children_by_key:
                     return self.children_by_key[key]
                 else:
                     return None
-            else:
-                return self.descend(key)
+            #else:
+            #    print('regular key', key)
+            #    logging.debug('Fuck i am here %s' % key)
+            #    return self.descend(key)
+            #    exit()
+ 
         else:
             return self.children[key]
 
@@ -61,15 +63,9 @@ class Node:
         self.add(Node(key).add(value))
 
     def __contains__(self, key):
-        try:
-            if key in self.children_by_key:
-                return True
-            else:
-                return False
-            self[key]
-            return True
-        except Exception:
-            return False
+        keys = list(self.children_by_key.keys()) 
+        #keys = [k.split('.')[-1] for k in keys]
+        return key in keys
 
     def __len__(self):
         return len(self.children)

@@ -20,10 +20,10 @@
     the %color %type
 
 %object1
-    the %color %object1_type
+    the %color %type
 
 %object2
-    the %object2_color %object2_type
+    the %color %type
     
 %size
     big
