@@ -4,7 +4,7 @@ import math
 import random
 import json
 import sys
-from node import *
+from nalangen.node import *
 
 SHIFT_WIDTH = 4
 

@@ -5,23 +5,14 @@ from tempfile import NamedTemporaryFile
 import filecmp
 import os
 import sys
-sys.path.append("..")
-from generate import parser_from_file, generate_sentences, write_results
-from generate import add_json_context
-from node import Node
-import logging 
+from nalangen import parser_from_file, generate_sentences, write_results
+from nalangen import add_json_context
+from nalangen.node import Node
+import logging
+from conftest import *
 
-ROOT_DIR = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 EXPECTED_DIR = ROOT_DIR / "tests" / "expected"
 
-@pytest.fixture
-def parser():
-    return initialize_parser()
-
-def initialize_parser():
-    random.seed(1)
-    parser = parser_from_file(ROOT_DIR / "templates" / "skills.nlg")
-    return parser
 
 def compare_results(expected, results):
     if not os.path.isfile(expected):

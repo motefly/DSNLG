@@ -1,5 +1,5 @@
 from pathlib import Path
-from parse import *
+from nalangen.parse import *
 import os
 import json
 from argparse import ArgumentParser
