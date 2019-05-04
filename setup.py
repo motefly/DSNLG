@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-from distutils.core import setup
+from setuptools import setup, find_packages
+
+
+def readme():
+    with open('README.md') as f:
+        return f.read()
 
 setup(name='nalangen',
     version='0.1',
