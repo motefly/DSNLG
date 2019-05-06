@@ -159,7 +159,6 @@ class Node:
         self.children.append(child)
         self.children_by_key[child.key] = child
         child.parent = self
-        return self
 
     def merge(self, child, type=None):
         if not isinstance(child, Node):

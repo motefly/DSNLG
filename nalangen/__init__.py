@@ -4,7 +4,6 @@ import os
 import json
 from argparse import ArgumentParser
 import logging
-#            import pudb; pudb.set_trace();
 
 all_punctuation = ';:,.!?'
 end_punctuation = '.!?'
@@ -128,11 +127,15 @@ def parser_from_file(filename):
     parsed.map_leaves(tokenize_leaf)
     return parsed
 
+def default_parser():
+    root_dir = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
+    return parser_from_file(root_dir / "templates" / "skills.nlg")
+
 def generate_sentences(parsed, context=Node('%'), n=1):
     """ Generate random sentences from a parser """ 
     key = context.key
     flats, trees = [], []
-
+    print(context)
     for i in range(n):
         f, t = walk_tree(parsed, parsed[key], context[key])
         flats.append(f)
@@ -161,7 +164,8 @@ def add_json_context(filename, context):
         sys.exit()
     logging.debug("Adding JSON context")
     dict_json = json.loads(Path(filename).read_text())
-    return context.add(parse_dict(dict_json))
+    context.add(parse_dict(dict_json))
+    return context
 
 
 
