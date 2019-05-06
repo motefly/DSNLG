@@ -4,6 +4,22 @@ A natural language generation language, intended for creating training data usin
 The parser was built in a very similar project [nalgene](https://github.com/spro/nalgene).
 This project differentiates itself by using different structures in the grammar. 
 
+## Installation
+
+Python 3.6+ is recommended. You can select this version with [pyenv](https://github.com/pyenv/pyenv-installer).
+Installation is using `pip`:
+
+```
+$ pip install .
+```
+
+To run tests, you need to install `pytest` and run it:
+
+```
+$ pip install pytest
+$ pytest
+```
+
 ## Overview
 
 Nalgenarg generates pairs of sentences and grammar trees by a random walk through a grammar file.
