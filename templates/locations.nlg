@@ -1,14 +1,25 @@
-%location_top
+%localization
+    %top
+    %below
+    %side
+    %left 
+    %right 
+
+
+%top
     on top of
     above
     over
     atop of
 
-%location_below
+%below
     below
     underneath
 
-%location_side
+%bottom
+    %below
+
+%side
     next to
     beside
     alongside
@@ -16,3 +27,10 @@
     next 
     off  
 
+%left
+    left
+    west
+
+%right
+    right
+    east

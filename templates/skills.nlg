@@ -15,6 +15,10 @@
 %buildTower3
     %buildTower2 and? %after %put %object3 %location_top %object2 
 
+%moveCube
+    %put %object1 %localization %object2
+    %object1 goes %localization %object2
+
 
 
 
