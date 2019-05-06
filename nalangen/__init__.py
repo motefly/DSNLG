@@ -135,7 +135,6 @@ def generate_sentences(parsed, context=Node('%'), n=1):
     """ Generate random sentences from a parser """ 
     key = context.key
     flats, trees = [], []
-    print(context)
     for i in range(n):
         f, t = walk_tree(parsed, parsed[key], context[key])
         flats.append(f)

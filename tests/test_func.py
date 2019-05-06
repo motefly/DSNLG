@@ -14,22 +14,17 @@ def test_from_dict(parser):
               "%object2.%type": "cube",
               "%object3.%color": "red",
               "%object3.%type": "cube"}
-#    Import pudb; pudb.set_trace()
     context.add(parse_dict(params, obj_key=context.key))
-    print(context)
 
-    flats, trees = generate_sentences(parser, context, 1)
-    result = flats[0].raw_str
-    assert "the blue cup" in result
-    assert "the white cube" in result
-    assert "red"  in result
-
-
+    flats, trees = generate_sentences(parser, context, 5)
+    for flat in flats:
+        result = flat.raw_str
+        assert "the blue cup" in result
+        assert "the white cube" in result
+        assert "red"  in result
 
 
 
 
-if __name__ == "__main__":
-    from nalangen import default_parser
-    parser = default_parser()
-    test_from_dict(parser)
+
+
