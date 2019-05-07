@@ -1,5 +1,6 @@
 from pathlib import Path
 from nalangen.parse import *
+from nalangen.node import Node
 import os
 import json
 from argparse import ArgumentParser
@@ -10,22 +11,33 @@ end_punctuation = '.!?'
 
 def find_next_node(child_key, current_key, root, context):
     next_node = None
-    if  context is not None and child_key in context:
-        return context[child_key]
+    if context is not None and child_key in context:
+        next_node = context[child_key]    
+        if next_node is not None and next_node.key.startswith(('%', '~')) and \
+            next_node.key in root:
+            key = next_node.children[0].key
+            next_node = root[key] 
+        return next_node
     composed = f"{current_key}.{child_key}"
     if context is not None and composed in context:
-        return context[composed]
-    
+        next_node = context[composed]
+        if next_node is not None and next_node.key.startswith(('%', '~')) and \
+            next_node.key in root:
+            key = next_node.children[0].key
+            next_node = root[key] 
+        return next_node   
     # there is no context so we are looking for a key in the tree
     if child_key in root:
-        return root[child_key]
+        next_node = root[child_key]
     if child_key.rstrip('0123456789') in root:
         next_node = root[child_key.rstrip('0123456789')]
         next_node.key = child_key
-        return next_node
+
+    if next_node is None: 
+        raise ValueError(f"Can't find a definition for the word {child_key}")
     
-    logging.error(f"Can't find a definition for the word {child_key}")
-    exit() 
+    return next_node
+
 
 def walk_tree(root, current, context, start_w=0):
     """ Generate tokens up to $value level """

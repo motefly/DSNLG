@@ -9,11 +9,11 @@
     %buildTower3
 
 %buildTower2
-    %put %object1 %location_top %object2
-    %object1 goes %location_top %object2
+    %put %object1 %top %object2
+    %object1 goes %top %object2
 
 %buildTower3
-    %buildTower2 and? %after %put %object3 %location_top %object2 
+    %buildTower2 and? %after %put %object3 %top %object2 
 
 %moveCube
     %put %object1 %localization %object2
