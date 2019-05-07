@@ -28,9 +28,7 @@
     off  
 
 %left
-    left
-    west
+    at the left side? of
 
 %right
-    right
-    east
+    at the right side? of

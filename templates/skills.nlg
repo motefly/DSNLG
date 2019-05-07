@@ -13,7 +13,7 @@
     %object1 goes %top %object2
 
 %buildTower3
-    %buildTower2 and? %after %put %object3 %top %object2 
+    %object1 goes %bottom %object2 and? %after %put %object3 %top %object2 
 
 %moveCube
     %put %object1 %localization %object2

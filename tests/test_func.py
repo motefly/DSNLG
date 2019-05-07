@@ -41,6 +41,7 @@ def test_with_synomyms_in_context(parser):
         assert "the blue cup" in result
         assert "the white cube" in result
         assert "left" in result or "west" in result
+        assert "%" not in result
 
 
 
