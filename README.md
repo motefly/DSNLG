@@ -1,4 +1,4 @@
-# nalgenarg
+# nalangen
 
 A natural language generation language, intended for creating training data using parametrized vectors.
 The parser was built in a very similar project [nalgene](https://github.com/spro/nalgene).
