@@ -10,6 +10,7 @@ SHIFT_WIDTH = 4
 
 start_space = r'^(    )*'
 
+
 def count_indent(s):
     indent = len(re.match(start_space, s).group(0))
     return math.floor(indent / SHIFT_WIDTH)
