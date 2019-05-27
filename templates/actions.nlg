@@ -1,4 +1,17 @@
 %put
     put 
     move
+    bring
   
+
+%release
+    leave
+    release
+    deliver
+
+%grasp
+    grasp
+    take
+    catch
+    yield
+    hold

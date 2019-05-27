@@ -154,6 +154,16 @@ def generate_sentences(parsed, context=Node('%'), n=1):
 
     return flats, trees
 
+def gen_sentence_by_dict(node_name, params, parser=default_parser()):
+    """ Given a node name and parameters, we generate a sentence """ 
+    
+    if not node_name.startswith("%"):
+        node_name = f"%{node_name}"
+    context = Node(node_name)
+    context.add(parse_dict(params, obj_key=context.key))
+    flats, _ = generate_sentences(parser, context)
+    return flats[0].raw_str
+
 def write_results(flats, trees, output=Path("")):
     """ Write results on output. If output's path is empty, we just print the results"""
 

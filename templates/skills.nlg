@@ -20,5 +20,8 @@
     %object1 goes %localization %object2
 
 
+%releaseCube
+    %release it %localization %object
 
-
+%graspCube
+    %grasp %object
