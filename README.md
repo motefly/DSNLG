@@ -1,28 +1,10 @@
-# nalangen
+# nalgene
 
-A natural language generation language, intended for creating training data using parametrized vectors.
-The parser was built in a very similar project [nalgene](https://github.com/spro/nalgene).
-This project differentiates itself by using different structures in the grammar. 
-
-## Installation
-
-Python 3.6+ is recommended. You can select this version with [pyenv](https://github.com/pyenv/pyenv-installer).
-Installation is using `pip`:
-
-```
-$ pip install .
-```
-
-To run tests, you need to install `pytest` and run it:
-
-```
-$ pip install pytest
-$ pytest
-```
+A natural language generation language, intended for creating training data for intent parsing systems.
 
 ## Overview
 
-Nalgenarg generates pairs of sentences and grammar trees by a random walk through a grammar file.
+Nalgene generates pairs of sentences and grammar trees by a random (or guided) walk through a grammar file.
 
 * Sentence: the natural language sentence, e.g. "turn on the light"
 * Tree: a nested list of tokens ([an s-expression](https://en.wikipedia.org/wiki/S-expression)) generated alongside the sentence, e.g.
@@ -36,74 +18,55 @@ Nalgenarg generates pairs of sentences and grammar trees by a random walk throug
 ## Usage
 
 ```
-$ python generate.py --help 
-usage: generate.py [-h] [--root ROOT] [--json JSON] [--log LOG] [-n N]
-                   [--output OUTPUT] [--seed SEED]
-                   template
-
-positional arguments:
-  template         Template file's path containing grammar structure
-
-optional arguments:
-  -h, --help       show this help message and exit
-  --root ROOT      Root command
-  --json JSON
-  --log LOG
-  -n N             Number of sentences to produce
-  --output OUTPUT  Output file to save generated sentences
-  --seed SEED      Seed for randomness
-
+$ python generate.py [template.nlg] [entry] [--key=value] ...
 ```
 
-By default, the utility is loading a sentence from a ramdomly-chosen node contained in the template file. But this node can be specified using   `--root`:
+By default, generation walks through the template tree from the entry `%` node and chooses phrases and values randomly:
 
 ```
-$ python generate.py templates/skills.nlg --root buildTower2
-> Put the yellow shape on top of the blue cube.
-( %buildTower2
-    ( %put (0, 0, 1) )
-    ( %object1 (1, 3, 3)
-        ( %color (2, 2, 1) )
-        ( %type (3, 3, 1)
-            ( %cube (3, 3, 1) ) ) )
-    ( %location_top (4, 6, 3) )
-    ( %object2 (7, 9, 3)
-        ( %color (8, 8, 1) )
-        ( %type (9, 9, 1)
-            ( %cube (9, 9, 1) ) ) ) )
---------------------------------------------------------------------------------
+$ python generate.py examples/iot.nlg
+> if the temperature in minnesota is equal to 2 then please turn the office light off thanks
+( %if
+    ( %condition
+        ( %currentWeather
+            ( $location minnesota ) )
+        ( $operator equal to )
+        ( $number 2 ) )
+    ( %setDeviceState
+        ( $device.name office light )
+        ( $device.state off ) ) )
 ```
 
-Generated sentences can be saved inside a file whose path is given in `--output`.
-
-## Generated sentences from specific parameters 
-
-You can also supply values from a JSON file:
+You can choose an entry point to start generation from:
 
 ```
-$ cat tests/buildTower.json
-{
-        "%object1.%color": "red",
-        "%object2.%type": "cube",
-        "%object2.%color": "red"
-}
-
-$ python generate.py templates/skills.nlg --root buildTower2 --json tests/buildTower.json
-> Move the red cup atop of the red cube.
-( %
-    ( %buildTower2 (0, 8, 9)
-        ( %put (0, 0, 1) )
-        ( %object1 (1, 3, 3)
-            ( %object1.%color (2, 2, 1) red )
-            ( %type (3, 3, 1)
-                ( %cup (3, 3, 1) ) ) )
-        ( %location_top (4, 5, 2) )
-        ( %object2 (6, 8, 3)
-            ( %object2.%color (7, 7, 1) red )
-            ( %object2.%type (8, 8, 1) cube ) ) ) )
---------------------------------------------------------------------------------
+$ python generate.py examples/iot.nlg getWeather
+> tell me what it's like in new york
+( %getWeather
+    ( $location new york ) )
 ```
 
+You can also supply values from the command line (unspecified values will be randomly chosen):
+
+```
+$ python generate.py examples/iot.nlg getWeather --location tokyo
+> what is the weather in tokyo ?
+( %getWeather
+    ( $location tokyo ) )
+```
+
+Or from a JSON file:
+
+```
+$ cat command.json
+{"entry": "%setDeviceState", "values": {"$device.state": "off", "$device.name": "office light"}}
+
+$ cat command.json | python generate.py examples/iot.nlg
+> please turn off the office light
+( %setDeviceState
+    ( $device.state off )
+    ( $device.name office light ) )
+```
 
 ## Syntax
 
@@ -111,11 +74,29 @@ A .nlg nalgene grammar file is a set of sections separated by a blank line. Ever
 
 ```
 node_name
-    sequence 1
-    sequence 2
+    token sequence 1
+    token sequence 2
 ```
 
-A word in the sequence might begin by "%". In this case, the parser will search for its corresponding node in the grammar file. For example:
+The indented lines under a node are the node's possible token sequences. Each token in a sequence is either
+
+* a regular word (no prefix),
+* a `%phrase` node,
+* a `$value` node,
+* a `@ref` node,
+* or a `~synonym` word.
+
+Each token is added to the output sentence and/or tree during generation, depending on the type.
+
+A standard .nlg file starts with a *start phrase* `%`, which is the default entry point for the generator. The generator may also use a specific entry point.
+
+## Phrases
+
+A phrase (`%phrase`) is a general set of token sequences. A phrase is potentially recursive, using tokens which represent other phrases (even itself). Each phrase defines one or more possible sequences.
+
+The regular words in a phrase are ignored in the output tree. This makes them useful for defining higher level grammar for the same intent - for example, for different word orders ("turn on the light" vs "turn the light on").
+
+Using this grammar:
 
 ```
 %
@@ -162,19 +143,78 @@ Here's how the generator arrived at this specific sentence and tree pair:
         * Now the output sentence is `"hey there and bye"`
 * No more tokens, so we're done
 
-## Homonyms
+## Values
 
-Sometimes, we want to specify several nodes having different properties. We can do it easily with trailing digits:
+Sometimes you need to capture the specific words in a sentence, for example to capture the location in a sentence like "how is the weather in boston". Values, marked with a dollar sign as `$value`, are a type of leaf node that capture the regular word tokens in the tree.
 
 ```
-%object
-    the %color %type
+%getWeather
+    what is the weather in $location
+    how is the $location weather
 
-%buildTower
-    the %object1 goes on top of %object2
+$location
+    boston
+    san francisco
+    tokyo
 ```
 
+```
+> what is the weather in san francisco
+( %getWeather
+    ( $location san francisco ) )
+```
 
+## Refs
+
+**TODO**: Better name for this
+
+As an alternative to the freeform `$value`, there is a `@ref` leaf node which references a specific value without capturing the words beneath it. This allows you to reference a specific entity, e.g. a specific room or device name, with multiple expansions.
+
+```
+%turnOnLight
+    turn the %light on
+
+%light
+    @office_light
+    @living_room_light
+
+@office_light
+    office light
+    light in the office
+
+@living
+    light in the den
+    light in the living room
+    living room light
+```
+
+## Synonyms
+
+Synonyms, marked `~synonym`, are output only on the sentence side, and are useful for supplying word variations.
+
+```
+%good
+    ~exclamation this is ~so ~good
+
+~exclamation
+    wow
+    omg
+
+~so
+    so
+    very
+    extremely
+
+~good
+    good
+    great
+    wonderful
+```
+
+```
+> wow this is extremely great
+( %good )
+```
 
 ## Optional tokens
 
@@ -200,5 +240,39 @@ Tokens with a `?` at the end will be used only 50% of the time.
         ( $location tokyo ) ) )
 ```
 
+## Passthrough tokens
 
+Tokens with a `=` at the end are called "passthrough" tokens and will not be included in the output tree, but their children will be. This is defined at the root level, rather than within a token sequence.
+
+```
+%
+    ~please? %command
+
+%command=
+    %getTime
+    %getFact
+
+%getTime
+    what time is it
+    what is the time
+
+%getFact=
+    %getLocationFact
+    %getPersonFact
+    %getPersonalFact
+```
+
+In this case, whenever the `%command` token is encountered, whatever its children output will be directly added to the tree (as opposed to prefixed with the `%command` token), so it will be output as `%getTime` or `%getFact`. But in fact `%getFact` is another passthrough token, so the value of its children will be passed all the way up the tree.
+
+```
+> what is the time
+( %
+    ( %getTime ) )
+
+> pretty please what is the population of tokyo
+( %
+    ( %getLocationFact
+        ( $location_fact population )
+        ( $location tokyo ) ) )
+```
 

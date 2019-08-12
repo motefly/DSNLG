@@ -4,12 +4,11 @@ import math
 import random
 import json
 import sys
-from nalangen.node import *
+from node import *
 
 SHIFT_WIDTH = 4
 
 start_space = r'^(    )*'
-
 
 def count_indent(s):
     indent = len(re.match(start_space, s).group(0))

@@ -5,14 +5,15 @@ from tempfile import NamedTemporaryFile
 import filecmp
 import os
 import sys
-from nalangen import parser_from_file, generate_sentences, write_results
-from nalangen import add_json_context
-from nalangen.node import Node
-import logging
-from conftest import *
+sys.path.append("..")
+from generate import parser_from_file, generate_sentences, write_results
+from node import Node
+import logging 
 
+ROOT_DIR = Path(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 EXPECTED_DIR = ROOT_DIR / "tests" / "expected"
 
+random.seed(1)
 
 def compare_results(expected, results):
     if not os.path.isfile(expected):
@@ -39,21 +40,23 @@ def compare_results(expected, results):
             print("Please answer by yes or no.")
 
 
+def create_fixture_data():
+    """ This should be run carefully as it overwrites the expected results """
+    pass
 
-def test_example_build_tower2(parser):
-    flats, trees = generate_sentences(parser, Node("%buildTower2"), 1)
+def test_example_iot_root():
+    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
+    flats, trees = generate_sentences(parser, Node("%"), 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
-    compare_results(EXPECTED_DIR / "basic_build_tower2.test", tmp.name)
+    compare_results(EXPECTED_DIR / "iot_root.test", tmp.name)
 
-def test_example_json(parser):
-    context = add_json_context(ROOT_DIR / "tests" / "buildTower.json",
-            Node("%"))
-    flats, trees = generate_sentences(parser, context, 1)
+def test_example_iot_tokyo():
+    parser = parser_from_file(ROOT_DIR / "examples" / "iot.nlg")
+    flats, trees = generate_sentences(parser, Node("%"), 1)
     tmp = NamedTemporaryFile(delete=False)
     write_results(flats, trees, output=tmp.name)
-    compare_results(EXPECTED_DIR / "json.test", tmp.name)
-
+    compare_results(EXPECTED_DIR / "iot_tokyo.test", tmp.name)
 
 
 if __name__ == "__main__":
@@ -61,5 +64,5 @@ if __name__ == "__main__":
     def istest(o):
         return isfunction(o[1]) and  o[0].startswith("test")
 
-    [o[1](initialize_parser()) for o in getmembers(sys.modules[__name__]) \
+    [o[1]() for o in getmembers(sys.modules[__name__]) \
             if istest(o)]
