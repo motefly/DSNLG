@@ -1,5 +1,6 @@
 from pathlib import Path
 from parse import *
+from node import Node
 import os
 import json
 from argparse import ArgumentParser
@@ -7,6 +8,35 @@ import logging
 
 all_punctuation = ';:,.!?'
 end_punctuation = '.!?'
+
+def find_next_node(child_key, current_key, root, context):
+    next_node = None
+    if context is not None and child_key in context:
+        next_node = context[child_key]    
+        if next_node is not None and next_node.key.startswith(('%', '~')) and \
+            next_node.key in root:
+            key = next_node.children[0].key
+            next_node = root[key] 
+        return next_node
+    composed = f"{current_key}.{child_key}"
+    if context is not None and composed in context:
+        next_node = context[composed]
+        if next_node is not None and next_node.key.startswith(('%', '~')) and \
+            next_node.key in root:
+            key = next_node.children[0].key
+            next_node = root[key] 
+        return next_node   
+    # there is no context so we are looking for a key in the tree
+    if child_key in root:
+        next_node = root[child_key]
+    if child_key.rstrip('0123456789') in root:
+        next_node = root[child_key.rstrip('0123456789')]
+        next_node.key = child_key
+
+    if next_node is None: 
+        raise ValueError(f"Can't find a definition for the word {child_key}")
+    
+    return next_node
 
 
 def walk_tree(root, current, context, start_w=0):
@@ -24,12 +54,9 @@ def walk_tree(root, current, context, start_w=0):
     flat = Node('>')
     tree = Node(current.key)
 
-    # TODO: Remove?
     if seq.is_leaf:
-        print('flat seq', seq)
         flat.add(seq)
         tree.add(seq)
-        print('tree flat', tree)
         return flat, tree
 
     for child in seq:
@@ -43,13 +70,11 @@ def walk_tree(root, current, context, start_w=0):
                 continue
 
         # Expandable word, e.g. %phrase or ~synonym
-        if child_key.startswith(('%', '~', '$', '@')):
-            sub_context = context[child_key]  \
-                if context is not None and child_key in context \
-                else None
+        if child_key.startswith(('%', '~')):
+            next_node = find_next_node(child_key, current.key, root, context)
 
             try:
-                sub_flat, sub_tree = walk_tree(root, sub_context or root[child_key], context, start_w)
+                sub_flat, sub_tree = walk_tree(root, next_node, context, start_w)
             except Exception as e:
                 logging.error('Exception walking from current %s %s %s'
                         % (current, child_key, str(context)))
@@ -65,7 +90,7 @@ def walk_tree(root, current, context, start_w=0):
 
             # Add to (or merge with) tree
             if not child_key.startswith('~'):
-                if root[child_key].passthrough:
+                if child_key in root and root[child_key].passthrough:
                     tree.merge(sub_tree)
                 else:
                     tree.add(sub_tree)
@@ -114,17 +139,32 @@ def parser_from_file(filename):
     parsed.map_leaves(tokenize_leaf)
     return parsed
 
+def default_parser():
+    root_dir = Path(os.path.dirname(os.path.realpath(__file__)))
+    return parser_from_file(root_dir / "templates" / "skills.nlg")
+
 def generate_sentences(parsed, context=Node('%'), n=1):
     """ Generate random sentences from a parser """ 
     key = context.key
     flats, trees = [], []
-
+    import pdb
+    pdb.set_trace()
     for i in range(n):
         f, t = walk_tree(parsed, parsed[key], context[key])
         flats.append(f)
         trees.append(t)
 
     return flats, trees
+
+def gen_sentence_by_dict(node_name, params, parser=default_parser()):
+    """ Given a node name and parameters, we generate a sentence """ 
+    
+    if not node_name.startswith("%"):
+        node_name = f"%{node_name}"
+    context = Node(node_name)
+    context.add(parse_dict(params, obj_key=context.key))
+    flats, _ = generate_sentences(parser, context)
+    return flats[0].raw_str
 
 def write_results(flats, trees, output=Path("")):
     """ Write results on output. If output's path is empty, we just print the results"""
@@ -140,6 +180,16 @@ def write_results(flats, trees, output=Path("")):
                 f.write('\n>%s' % fix_sentence(flat.raw_str))
                 f.write('\n%s' % tree)
                 f.write('\n' + '-' * 80)
+
+def add_json_context(filename, context):
+    if not os.path.isfile(filename):
+        logging.error("The specified json file does not exist")
+        sys.exit()
+    logging.debug("Adding JSON context")
+    dict_json = json.loads(Path(filename).read_text())
+    context.add(parse_dict(dict_json))
+    return context
+
 
 
 if __name__ == "__main__":
@@ -180,12 +230,9 @@ if __name__ == "__main__":
         root_context = root_context.add(parse_dict(unknown))
 
     if known.json != Path(""):
-        if not os.path.isfile(known.json):
-            logging.error("The specified json file does not exist")
-            sys.exit()
-        logging.debug("Adding JSON context")
-        dict_json = json.load(open(known.json))
-        root_context = root_context.add(parse_dict(dict_json))
+        root_context = add_json_context(known.json, root_context)
+    
+    logging.debug(str(root_context))
 
     if not os.path.isfile(known.template):
             logging.error("The specified template file does not exist")
