@@ -1,10 +1,11 @@
 '''
 Created on Oct 17, 2016
+Modified on Aug 12, 2019
 
 --dia_act_nl_pairs.v6.json: agt and usr have their own NL.
 
 
-@author: xiul
+@author: xiul, zhenhui
 '''
 
 import pickle
@@ -28,18 +29,18 @@ class nlg:
             slot_placeholder = slot + suffix
             if slot == 'result' or slot == 'numberofpeople': continue
             if slot_vals == dialog_config.NO_VALUE_MATCH: continue
-            tmp_sentence = sentence.decode().replace(slot_placeholder, slot_vals, 1)
+            tmp_sentence = sentence.replace(slot_placeholder, slot_vals, 1)
             sentence = tmp_sentence
                 
         if 'numberofpeople' in slot_val_dict.keys():
             slot_vals = slot_val_dict['numberofpeople']
             slot_placeholder = 'numberofpeople' + suffix
-            tmp_sentence = sentence.decode().replace(slot_placeholder, slot_vals, 1)
+            tmp_sentence = sentence.replace(slot_placeholder, slot_vals, 1)
             sentence = tmp_sentence
     
         for slot in slot_dict.keys():
             slot_placeholder = slot + suffix
-            tmp_sentence = sentence.decode().replace(slot_placeholder, '')
+            tmp_sentence = sentence.replace(slot_placeholder, '')
             sentence = tmp_sentence
             
         return sentence
@@ -58,11 +59,24 @@ class nlg:
         
         if dia_act['diaact'] in self.diaact_nl_pairs['dia_acts'].keys():
             for ele in self.diaact_nl_pairs['dia_acts'][dia_act['diaact']]:
+                # match the set accurately, or have no answer
                 if set(ele['inform_slots']) == set(dia_act['inform_slots'].keys()) and set(ele['request_slots']) == set(dia_act['request_slots'].keys()):
                     sentence = self.diaact_to_nl_slot_filling(dia_act, ele['nl'][turn_msg])
                     boolean_in = True
                     break
-        
+                
+        if not boolean_in:
+            MAX_Match = 0
+            ans = None
+            if dia_act['diaact'] in self.diaact_nl_pairs['dia_acts'].keys():
+                for ele in self.diaact_nl_pairs['dia_acts'][dia_act['diaact']]:
+                    # match the items as much as possible
+                    cur_Match = len(set(ele['inform_slots']) & set(dia_act['inform_slots'].keys())) + len(set(ele['request_slots']) & set(dia_act['request_slots'].keys()))
+                    if cur_Match > MAX_Match:
+                        ans = ele
+                sentence = 'Incomplete: ' +self.diaact_to_nl_slot_filling(dia_act, ans['nl'][turn_msg])
+                boolean_in = True
+
         if dia_act['diaact'] == 'inform' and 'taskcomplete' in dia_act['inform_slots'].keys() and dia_act['inform_slots']['taskcomplete'] == dialog_config.NO_VALUE_MATCH:
             sentence = "Oh sorry, there is no ticket available."
         
@@ -108,24 +122,24 @@ if __name__ == "__main__":
 
     agent_action = {}
 
-    agent_action['diaact'] = 'inform'
-    agent_action['inform_slots'] = {'city': 'seattle',
-                                    'numberofpeople': '2',
-                                    'theater': 'regal meridian 16',
-                                    'date': 'tomorrow',
-                                    'starttime': '9:10 pm',
-                                    'moviename': 'zootopia',
-                                    'taskcomplete': 'Ticket Available',
-                                    'moviename': 'zootopia'}
-    agent_action['request_slots'] = {}
+    # agent_action['diaact'] = 'inform'
+    # agent_action['inform_slots'] = {'city': 'seattle',
+    #                                 'numberofpeople': '2',
+    #                                 'theater': 'regal meridian 16',
+    #                                 'date': 'tomorrow',
+    #                                 'starttime': '9:10 pm',
+    #                                 'moviename': 'zootopia',
+    #                                 'taskcomplete': 'Ticket Available',
+    #                                 'moviename': 'zootopia'}
+    # agent_action['request_slots'] = {}
     
     # agent_action['diaact'] = 'inform'
     # agent_action['inform_slots'] = {'starttime': '9:10 pm'}
     # agent_action['request_slots'] = {}
     
-    # agent_action['diaact'] = 'request'
-    # agent_action['inform_slots'] = {'numberofpeople': '2',
-    #                                 'moviename': 'the big short'}
-    # agent_action['request_slots'] = {'ticket': 'UNK'}
+    agent_action['diaact'] = 'request'
+    agent_action['inform_slots'] = {'numberofpeople': '2',
+                                    'moviename': 'the big short'}
+    agent_action['request_slots'] = {'ticket': 'UNK'}
     res = nlg_model.convert_diaact_to_nl(agent_action, 'agt')
     print(res)
