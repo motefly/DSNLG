@@ -26,6 +26,8 @@ res = nlg_model.convert_diaact_to_nl(agent_action, 'agt')
 
 ## Json Definition
 You can also add some new nl-act pairs into the json file.
+
+For example, the intent is "inform", you can add a new block containing "request_slots", "nl" and "inform_slots".
 ```
 "inform": [
       {
