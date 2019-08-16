@@ -3,11 +3,10 @@
 This repo is based on json parsing, and is used to generate the natural language for dialogue system.
 
 ## Strategy
-The program searches the json defition and find the one cover all of the request solts and inform solts, 
-and output the defined natural language; If the slots cannot be matched completely, 
+The program searches the pre-defition in json file and find the one cover all of the request solts and inform solts given in actions, 
+and then output the defined natural language; If the slots cannot be matched completely, 
 the program will find the one matching the slots as much as possible, 
 the output sentence will be marked "incomplete: " in the head.
-
 
 ## Usage
 ```python
